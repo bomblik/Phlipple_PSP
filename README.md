@@ -1,6 +1,6 @@
 #Phlipple for Sony Playstation Portable
 
-This is a Sony Playstation Portable port of Phlipple game.
+This is a Sony Playstation Portable port of Phlipple game, designed by Remigiusz Dybka.
 
 https://sourceforge.net/projects/phlipple
 
@@ -61,7 +61,7 @@ Copy phlipple_0.8.5_psp directory to Sony PSP device
     LEFT TRIGGER             - rotate scene counterclockwise
     RIGHT TRIGGER            - rotate scene clockwise
 
-    D-PAD                    - fold sides 
+    D-PAD                    - flip squares
 
     TRIANGLE                 - toggle sound
 
