@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Phlipple
+Comment=Phlipping squares will never be the same again
+TryExec=phlipple
+Exec=phlipple
+Categories=Game;LogicGame;
+Icon=phlipple
+MimeType=

@@ -1,0 +1,4 @@
+All files in this directory:
+Copyright © 2011 Remigiusz Dybka
+Released under GPLv3 license
+
