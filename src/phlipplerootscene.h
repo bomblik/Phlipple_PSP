@@ -23,7 +23,10 @@
 #include <windows.h>
 #endif
 
+#ifndef PLATFORM_PSP
 #include "GL/glew.h"
+#endif
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 

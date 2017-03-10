@@ -37,9 +37,111 @@
 #include <SDL/SDL_mixer.h>
 
 #include "osinterface.h"
+
 #include "GL/glew.h"
+
 #include "engine.h"
 #include "settings.h"
+
+#ifdef PLATFORM_PSP
+#include <pspkernel.h>
+#include <psppower.h>
+
+PSP_HEAP_SIZE_KB (18 * 1024);
+PSP_MAIN_THREAD_ATTR (0);
+PSP_MAIN_THREAD_STACK_SIZE_KB (4 * 1024);
+
+SDL_Joystick* joy;
+
+enum psp_buttons {
+        TRIANGLE = 0,
+        CIRCLE = 1,
+        CROSS = 2,
+        SQUARE = 3,
+        LEFT_TRIGGER = 4,
+        RIGHT_TRIGGER = 5,
+        DOWN = 6,
+        LEFT = 7,
+        UP = 8,
+        RIGHT = 9,
+        SELECT = 10,
+        START = 11,
+        HOME = 12,
+        HOLD = 13,
+};
+
+#define SCREEN_WIDTH  480
+#define SCREEN_HEIGHT 272
+
+SDL_Surface *image;
+SDL_RWops *rwop;
+SDL_Rect offset;
+
+    /***************************************************************************
+     * Exit Callback                                                           *
+     ***************************************************************************/
+int
+exit_callback (int arg1, int arg2, void *common)
+{
+  sceKernelExitGame ();
+  return 0;
+}
+
+
+    /***************************************************************************
+     * Power Callback                                                          *
+     ***************************************************************************/
+int
+power_callback (int unknown, int pwrflags, void *common)
+{
+  if (pwrflags & PSP_POWER_CB_POWER_SWITCH)
+  {
+  }
+  else if (pwrflags & PSP_POWER_CB_RESUME_COMPLETE)
+  {
+  }
+
+  return 0;
+}
+
+    /***************************************************************************
+     * Callback Thread                                                         *
+     ***************************************************************************/
+static int
+callback_thread (SceSize args, void *argp)
+{
+  int cbid;
+
+  cbid = sceKernelCreateCallback ("exit callback", exit_callback, NULL);
+  sceKernelRegisterExitCallback (cbid);
+
+  cbid = sceKernelCreateCallback ("power callback", power_callback, NULL);
+  scePowerRegisterCallback (0, cbid);
+
+  sceKernelSleepThreadCB ();
+  return 0;
+}
+
+
+    /***************************************************************************
+     * Setup Callbacks                                                         *
+     ***************************************************************************/
+static int
+setup_callbacks (void)
+{
+  int thid = 0;
+
+  thid =
+    sceKernelCreateThread ("update_thread", callback_thread, 0x11, 0xFA0,
+               PSP_THREAD_ATTR_USER, 0);
+  if (thid >= 0)
+    {
+      sceKernelStartThread (thid, 0, 0);
+    }
+
+  return thid;
+}
+#endif
 
 void keyboard(unsigned char key, int x, int y);
 void special(int key, int x, int y);
@@ -88,34 +190,18 @@ double getNanoTime()
 
 void OS_init(int *argc, char **argv)
 {
+#ifdef PLATFORM_PSP
+	setup_callbacks();
+#endif
+
 	settings_load();
 	frameTime = 1.0 / ((double) ENGINE_DEFAULT_FPS);
 
 	evts = SceneManager_eventsInit();
-	if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0)
+	if (SDL_Init(SDL_INIT_EVERYTHING ) < 0)
 	{
 		fprintf(stderr, "Could not initialize SDL:%s\n", SDL_GetError());
 		exit(-1);
-	}
-
-	if (Mix_OpenAudio(44100, AUDIO_S16, 2, 4096) < 0)
-	{
-		fprintf(stderr, "No audio: %s\n", SDL_GetError());
-	}
-	else
-	{
-		audioInitialized = 1;
-
-		music_theme = Mix_LoadMUS(OS_getFileName("theme.ogg"));
-		music_success = Mix_LoadMUS(OS_getFileName("success.ogg"));
-		music_failure = Mix_LoadMUS(OS_getFileName("failure.ogg"));
-
-		snd_phlip = Mix_LoadWAV(OS_getFileName("phlip.ogg"));
-		snd_click = Mix_LoadWAV(OS_getFileName("click.ogg"));
-		snd_click2 = Mix_LoadWAV(OS_getFileName("click2.ogg"));
-		snd_buzz = Mix_LoadWAV(OS_getFileName("glitch.ogg"));
-
-		Mix_VolumeMusic(MIX_MAX_VOLUME);
 	}
 
 	vi = SDL_GetVideoInfo();
@@ -145,19 +231,76 @@ void OS_init(int *argc, char **argv)
 		exit(-1);
 	}
 
+#ifndef PLATFORM_PSP
 	screen = SDL_SetVideoMode(640, 480, bpp, SDL_OPENGL | SDL_RESIZABLE);
+#else
+	screen = SDL_SetVideoMode(480, 272, bpp, SDL_SWSURFACE | SDL_FULLSCREEN);
+#endif
 	width = screen->w;
 	height = screen->h;
 
+#ifdef PLATFORM_PSP
+    if(SDL_NumJoysticks() > 0)
+    {
+        joy=SDL_JoystickOpen(0);
+    }
+
+    SDL_ShowCursor(SDL_DISABLE);
+
+    rwop=SDL_RWFromFile("phlipple_splash_screen.png", "rb");
+    image=IMG_LoadPNG_RW(rwop);
+    if(!image)
+    {
+      printf("Error loading splash screen\n");
+    }
+
+    offset.x = 0;
+    offset.y = 0;
+
+    SDL_BlitSurface( image, NULL, screen, &offset );
+    SDL_FreeSurface (image);
+    SDL_Flip (screen);
+
+	screen = SDL_SetVideoMode(480, 272, bpp, SDL_OPENGL);
+#endif
+
+    if (Mix_OpenAudio(44100, AUDIO_S16, 2, 4096) < 0)
+    {
+        fprintf(stderr, "No audio: %s\n", SDL_GetError());
+    }
+    else
+    {
+        audioInitialized = 1;
+
+        music_theme = Mix_LoadMUS(OS_getFileName("theme.ogg"));
+        music_success = Mix_LoadMUS(OS_getFileName("success.ogg"));
+        music_failure = Mix_LoadMUS(OS_getFileName("failure.ogg"));
+
+        snd_phlip = Mix_LoadWAV(OS_getFileName("phlip.ogg"));
+        snd_click = Mix_LoadWAV(OS_getFileName("click.ogg"));
+        snd_click2 = Mix_LoadWAV(OS_getFileName("click2.ogg"));
+        snd_buzz = Mix_LoadWAV(OS_getFileName("glitch.ogg"));
+
+        Mix_VolumeMusic(MIX_MAX_VOLUME);
+    }
+
+#ifndef PLATFORM_PSP
 	char wmcapt[256];
 	sprintf(wmcapt, "Phlipple ver %s", PACKAGE_VERSION);
 
 	SDL_WM_SetCaption(wmcapt, wmcapt);
+#endif
 }
 
 int OS_mainLoop()
 {
-	GLenum err = glewInit();
+	GLenum err;
+#ifndef PLATFORM_PSP
+	err = glewInit();
+#else
+	err = GLEW_OK;
+#endif
+
 	if (err == GLEW_OK)
 	{
 		SceneManager_reshape(screen->w, screen->h);
@@ -237,6 +380,7 @@ void gameLoop()
 			reshape(event.resize.w, event.resize.h);
 			break;
 
+#ifndef PLATFORM_PSP
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym)
 			{
@@ -268,6 +412,52 @@ void gameLoop()
 			default:
 				break;
 			}
+#else
+                case SDL_JOYBUTTONDOWN:
+                        switch (event.jbutton.button)
+                        {
+                        case UP:
+                                k = OS_key_up;
+                                break;
+                        case DOWN:
+                                k = OS_key_down;
+                                break;
+                        case LEFT:
+                                k = OS_key_left;
+                                break;
+                        case RIGHT:
+                                k = OS_key_right;
+                                break;
+                        case CROSS:
+                                k = OS_key_ok;
+                                break;
+                        case LEFT_TRIGGER:
+                                k = OS_key_rol;
+                                break;
+                        case RIGHT_TRIGGER:
+                                k = OS_key_ror;
+                                break;
+                        case SQUARE:
+                                break;
+                        case CIRCLE:
+                                k = OS_key_cancel;
+                                break;
+                        case TRIANGLE:
+                                if (OS_sound_On)
+                                {
+                                  OS_sound_On = 0;
+                                  OS_stopMusic();
+                                }
+                                else
+                                {
+                                  OS_sound_On = 1;
+                                  OS_playMusic(OS_music_theme);
+                                }
+                                break;
+                        default:
+				break;
+                        }
+#endif
 
 			if (k != -1)
 				SceneManager_eventsAdd(evts, SCENEEVENT_TYPE_KEYDOWN, k, 0, 0);

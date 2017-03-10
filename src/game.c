@@ -20,7 +20,10 @@
 #include <windows.h>
 #endif
 
+#ifndef PLATFORM_PSP
 #include "GL/glew.h"
+#endif
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 
@@ -245,8 +248,11 @@ void game_logic(float timeElapsed, SceneEvents *evt)
 				case OS_key_ror:
 					phlipple_engine_ror(eng);
 					break;
-
+#ifndef PLATFORM_PSP
 				case 27:
+#else
+				case OS_key_cancel:
+#endif
 					SceneManager_return();
 					return;
 				}
@@ -1031,7 +1037,9 @@ void game_reshape(int w, int h)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthFunc(GL_LEQUAL);
+#ifndef PLATFORM_PSP
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+#endif
 	glLineWidth(2);
 	glViewport(0, 0, width, height);
 	glClearColor(0, 0, 1, 0);

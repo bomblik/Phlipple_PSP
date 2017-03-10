@@ -1,0 +1,42 @@
+PACKAGE_DATA_DIR=./data
+
+SOURCES=$(wildcard *.c)
+OBJS=$(patsubst %.c, %.o, $(SOURCES))
+VERSION=0.8.5
+PACKAGE=
+PACKAGE_VERSION=0.8.5
+
+TARGET=phlipple
+EXTRA_TARGETS=EBOOT.PBP
+PSP_EBOOT_TITLE=phlipple $(VERSION)
+PSP_EBOOT_ICON=phlipple.png
+PSP_LARGE_MEMORY=1
+PSP_FW_VERSION=390
+BUILD_PRX=1
+RELEASE_DIR=$(TARGET)_$(VERSION)_psp
+
+CFLAGS = -O2 -G0 -Wall -DPLATFORM_PSP -DMAX_PATH=255 -DPATH_MAX=255 -std=c99 -DPACKAGE=\"$(PACKAGE)\" -DPACKAGE_VERSION -DVERSION=\"$(VERSION)\" -DPACKAGE_DATA_DIR=\"$(PACKAGE_DATA_DIR)/\"
+CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
+ASFLAGS = $(CFLAGS)
+
+LIBDIR =
+LIBS = $(FONT_USE_SDL_TTF) -lfreetype -lSDL_mixer -lvorbisidec -lSDL_image -lpng -ljpeg -lz -lGL -lGLU -lpspgu
+LDFLAGS =
+
+PSPSDK=$(shell psp-config --pspsdk-path)
+PSPBIN = $(PSPSDK)/../bin
+CFLAGS += $(shell $(PSPBIN)/sdl-config --cflags) 
+CXXFLAGS += $(shell $(PSPBIN)/sdl-config --cflags)
+LIBS += $(shell $(PSPBIN)/sdl-config --libs)
+
+include $(PSPSDK)/lib/build.mak
+
+release:
+	@rm -rf $(RELEASE_DIR)
+	@echo Creating release directory $(RELEASE_DIR)
+	@mkdir $(RELEASE_DIR)
+	@echo Copying files...
+	@cp -r ../data $(RELEASE_DIR)
+	@cp -r phlipple_splash_screen.png $(RELEASE_DIR)
+	@cp EBOOT.PBP $(RELEASE_DIR)
+	@echo Done

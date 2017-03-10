@@ -77,6 +77,10 @@ const char *getDefaultDir()
 {
 	static char defDir[MAX_PATH];
 
+#ifdef PLATFORM_PSP
+	return "phlipple";
+#endif
+
 #ifndef WIN32
 	char *dir = getenv(ENVVAR);
 	sprintf(defDir, "%s%s%s", dir, SEPARATOR, DEFAULT_DIRECTORY);

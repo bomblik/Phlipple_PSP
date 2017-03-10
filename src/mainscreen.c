@@ -92,6 +92,10 @@ static int browserTouched;
 static char browserLevTxt[256];
 static float browserButtSize = 1.0;
 
+#ifdef PLATFORM_PSP
+static int browserLevel = 0;
+#endif
+
 void loadLevel(int l)
 {
 	char buff[256];
@@ -576,8 +580,11 @@ void mainScreen_render()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
+#ifndef PLATFORM_PSP
 	gluOrtho2D(left, right, bottom, top);
-
+#else
+	glOrtho(left, right, bottom, top, -1, 1);
+#endif
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -675,15 +682,21 @@ void mainScreen_reshape(int w, int h)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDepthFunc(GL_LEQUAL);
+#ifndef PLATFORM_PSP
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+#endif
 	glViewport(0, 0, width, height);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
+#ifndef PLATFORM_PSP
 	gluOrtho2D(left, right, bottom, top);
+#else
+	glOrtho(left, right, bottom, top, -1, 1);
+#endif
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -787,7 +800,7 @@ void browserLogic(SceneEvents *evt)
 	for (int e = 0; e < evt->nevt; e++)
 	{
 		SceneEvent v = evt->evts[e];
-
+#ifndef PLATFORM_PSP
 		float ex = (((float) v.x / (float) width) * (right - left)) + left;
 		float ey = (((float) v.y / (float) height) * (bottom - top)) + top;
 
@@ -829,7 +842,72 @@ void browserLogic(SceneEvents *evt)
 				}
 			}
 		}
+#else
+		if (v.type == SCENEEVENT_TYPE_KEYDOWN && pageSwap.idle)
+		{
+                  browserLevel = browserSelected;
 
+                  if (v.keyVal == OS_key_rol)
+                  {
+				  if (browserPage > 0)
+				  {
+				    browserPage--;
+					interpolator_setValImmediate(&pageSwap, 0);
+					interpolator_setVal(&pageSwap, 1);
+					OS_playSound(OS_snd_phlip);
+				  }
+                  }
+                  else if (v.keyVal == OS_key_ror)
+                  {
+				  if (browserPage < browserNPages - 1)
+				  {
+					browserPage++;
+					interpolator_setValImmediate(&pageSwap, 0);
+					interpolator_setVal(&pageSwap, -1);
+					OS_playSound(OS_snd_phlip);
+				  }
+                  }
+
+                  if (v.keyVal == OS_key_left)
+                  {
+                    if ((browserPage > 0) &&
+                        ((browserLevel) % 20 == 0))
+                    {
+                      browserPage--;
+                      interpolator_setValImmediate(&pageSwap, 0);
+                      interpolator_setVal(&pageSwap, 1);
+                    }
+
+                  if (browserLevel > 0)
+                    browserLevel--;
+
+		    browserTouched = browserLevel;
+		    browserSelected = browserLevel;
+		    browserLoadLevel(browserLevel);
+		    OS_playSound(OS_snd_click2);
+                  }
+                  else if (v.keyVal == OS_key_right)
+                  {
+                    if ((browserPage < browserNPages - 1) &&
+                        ((browserLevel + 1) % 20 == 0) &&
+                        (browserLevel > browserPage * 20))
+                    {
+                      browserPage++;
+                      interpolator_setValImmediate(&pageSwap, 0);
+                      interpolator_setVal(&pageSwap, -1);
+                    }
+
+                  if (browserLevel < nLevels - 1)
+                    browserLevel++;
+
+		    browserTouched = browserLevel;
+		    browserSelected = browserLevel;
+		    browserLoadLevel(browserLevel);
+		    OS_playSound(OS_snd_click2);
+                  }
+
+		}
+#endif
 	}
 }
 
@@ -902,6 +980,9 @@ void browserRender()
 
 				glColor4f(lineCol[0], lineCol[1], lineCol[2], ralph);
 
+#ifdef PLATFORM_PSP
+				if (curr == browserSelected)
+#endif
 				glDrawElements(
 				    GL_LINES,
 				    8,
@@ -976,12 +1057,14 @@ void browserRender()
 
 					glColor4f(lineCol[0], lineCol[1], lineCol[2], ralph);
 
+#ifndef PLATFORM_PSP
 					glDrawElements(
 					    GL_LINES,
 					    8,
 					    GL_UNSIGNED_SHORT,
 					    (void*) (long) (eng->zeroQuad->lineVBOoffset
 					                    * sizeof(unsigned short)));
+#endif
 
 					glColor4f(1, 0, 0, ralph);
 

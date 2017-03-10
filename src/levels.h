@@ -34,7 +34,12 @@ extern int nLevels;
 void levels_load();
 void levels_free();
 
+#ifdef PLATFORM_PSP
+#define TUTDESC_1	"Use D-PAD to flip, LEFT & RIGHT TRIGGER to rotate"
+#else
 #define TUTDESC_1	"Use arrows to flip, A & D to rotate"
+#endif
+
 #define TUTDESC_2	"Red joints work as hinges, they cannot be broken"
 #define TUTDESC_3	"Flipping can be done both ways"
 

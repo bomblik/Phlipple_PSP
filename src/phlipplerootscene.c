@@ -78,7 +78,7 @@ void phlipple_root_logic(float timeElapsed, SceneEvents *evt)
 	{
 		phlipple_root_free();
 		SceneManager_return();
-		state = 666;
+		state = 777;
 	}
 }
 
