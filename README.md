@@ -1,4 +1,4 @@
-#Phlipple for Sony Playstation Portable
+# Phlipple for Sony Playstation Portable
 
 This is a Sony Playstation Portable port of Phlipple game, designed by Remigiusz Dybka.
 
@@ -10,7 +10,7 @@ It starts off relatively easy to teach the basics just to later on serve hours o
 
 This port is based on Phlipple release 0.8.5
 
-##Game screenshots
+## Game screenshots
 
 Screenshots of different game challenges
 
@@ -23,16 +23,16 @@ Screenshots of different game challenges
   <img src="screenshots/6.jpg" width="480"/>
 </p>
 
-##Binary installation
+## Binary installation
 
 https://github.com/bomblik/Phlipple_PSP/releases
 
 Copy phlipple_0.8.5_psp directory to Sony PSP device
 (e.g. to ms0:/psp/game directory on Memory Stick).
 
-##Source installation
+## Source installation
 
-###Compilation
+### Compilation
 
 In order to compile Phlipple, please install psptoolchain
 and set development environment.
@@ -48,12 +48,12 @@ To prepare data for installation invoke
 
 That would create all required data in phlipple_0.8.5_psp directory
 
-###Installation
+### Installation
 
 Copy phlipple_0.8.5_psp directory to Sony PSP device
 (e.g. to ms0:/psp/game directory on Memory Stick).
 
-##Key mappings
+## Key mappings
 
     CROSS                    - confirm
     CIRCLE                   - cancel / exit game
